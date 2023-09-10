@@ -1,14 +1,64 @@
 import 'package:chatgpt/feature_box.dart';
 import 'package:chatgpt/pallete.dart';
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  SpeechToText stt = SpeechToText();
+  String words = '';
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    initSpeechtoText();
+  }
+
+// to initate the speech to text method this will ask permissions as well
+  Future<void> initSpeechtoText() async {
+    await stt.initialize();
+    setState(() {});
+  }
+
+// calls each time to initiate speech recognization
+  Future<void> startListening() async {
+    await stt.listen(onResult: onSpeechResult);
+    setState(() {});
+  }
+
+// This funaction is called the when the listener finds something to this function the recognized words
+  Future<void> onSpeechResult(SpeechRecognitionResult result) async {
+    setState(() {
+      words = result.recognizedWords;
+    });
+  }
+
+// This function is to stop listening
+  Future<void> stopListening() async {
+    await stt.stop();
+    setState(() {});
+  }
+
+  void recognize() async {
+    if (await stt.hasPermission && stt.isNotListening) {
+      await startListening();
+    } else if (stt.isListening) {
+      await stopListening();
+    } else {
+      initSpeechtoText();
+    }
+    print(words);
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
-      
       appBar: AppBar(
         leading: const Icon(Icons.menu),
         title: const Text("Anie"),
@@ -89,10 +139,11 @@ class HomePage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Pallete.firstSuggestionBoxColor,
-        onPressed: () {},
+        onPressed: () {
+          recognize();
+        },
         child: const Icon(Icons.mic),
       ),
-      
     );
   }
 }
